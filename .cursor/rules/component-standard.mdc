@@ -1,0 +1,179 @@
+---
+alwaysApply: true
+---
+
+# Vue 3 组件开发规范 - 自动化写作平台
+
+> **⚠️ 重要指令：在创建或修改本项目任何 Vue 组件时，必须严格遵循此规范！确保逻辑清晰、样式统一、符合 Vue 3 最佳实践。**
+
+## 🎯 组件创建流程
+
+### 1. 创建新组件前
+
+* ✅ **查重**：检查 `src/components/ui/` 是否已有 Button, Card, Input, Badge 等基础组件。
+* ✅ **对标**：查看 `.cursorrules` 确保颜色（Blue-600）、圆角（rounded-md）、间距符合设计系统。
+* ✅ **技术栈**：必须使用 `<script setup>` 语法及 **Composition API**。
+
+### 2. 组件结构规范 (SFC)
+
+```vue
+<script setup>
+import { ref, computed } from 'vue';
+import { Sparkles } from 'lucide-vue-next'; // 统一使用 Lucide 图标
+import AppButton from '@/components/ui/AppButton.vue';
+import AppCard from '@/components/ui/AppCard.vue';
+
+/**
+ * 组件描述：AI 写作卡片组件
+ * props: title (String), loading (Boolean)
+ * emits: 'submit'
+ */
+const props = defineProps({
+  title: { type: String, required: true },
+  loading: { type: Boolean, default: false }
+});
+
+const emit = defineEmits(['submit']);
+
+// 1. 状态管理
+const content = ref('');
+
+// 2. 计算属性
+const isContentValid = computed(() => content.value.length > 10);
+
+// 3. 事件处理
+const handleSubmit = () => {
+  if (isContentValid.value) {
+    emit('submit', content.value);
+  }
+};
+</script>
+
+<template>
+  <AppCard :title="props.title" class="hover:border-blue-300 transition-colors">
+    <div class="space-y-4">
+      <textarea
+        v-model="content"
+        class="w-full border-slate-200 rounded-md focus:ring-blue-500/20 focus:border-blue-600 text-slate-800"
+        placeholder="请输入内容..."
+      ></textarea>
+      
+      <div class="flex justify-end gap-3">
+        <AppButton variant="secondary" @click="content = ''">重置</AppButton>
+        <AppButton 
+          variant="primary" 
+          :loading="props.loading"
+          @click="handleSubmit"
+        >
+          <Sparkles :size="16" class="mr-2" />
+          开始 AI 生成
+        </AppButton>
+      </div>
+    </div>
+  </AppCard>
+</template>
+
+<style scoped>
+/* 仅在 Tailwind 无法覆盖特殊交互时使用 */
+</style>
+
+```
+
+### 3. 样式使用规范
+
+#### ✅ 正确示例（优先使用工具类）：
+
+```html
+<div class="bg-white p-6 rounded-lg border border-slate-200 shadow-sm">
+  <h3 class="text-lg font-medium text-slate-900">标题</h3>
+  <p class="text-base text-slate-600 leading-relaxed">正文内容</p>
+</div>
+
+```
+
+#### ❌ 错误示例：
+
+```html
+<div style="background-color: #1677FF; padding: 15px;">内容</div>
+
+<div class="p-[17px] rounded-[11px]">内容</div>
+
+```
+
+### 4. 核心页面模式规范
+
+#### 4.1 创作工作台（Editor）
+
+必须使用 **三栏布局** 容器，并确保编辑器区域是响应式的。
+
+```html
+<template>
+  <div class="flex h-screen overflow-hidden">
+    <aside class="w-80 border-r bg-slate-50">...</aside>
+    <main class="flex-1 bg-white overflow-y-auto">...</main>
+    <aside class="w-[360px] border-l">...</aside>
+  </div>
+</template>
+
+```
+
+#### 4.2 列表管理页面
+
+统一使用 `PageHeader` + `FilterBar` + `DataTable` 结构：
+
+```vue
+<template>
+  <div class="max-w-[1600px] mx-auto px-10 lg:px-40 py-8">
+    <AppPageHeader title="信源管理" description="管理 24h 监听的公开数据源">
+      <template #extra>
+        <AppButton variant="primary">新增信源</AppButton>
+      </template>
+    </AppPageHeader>
+    
+    <div class="mt-6 bg-white rounded-lg border border-slate-200">
+      <AppSearchFilter v-model="searchQuery" @search="handleSearch" />
+      <AppDataTable :columns="cols" :data="list" />
+    </div>
+  </div>
+</template>
+
+```
+
+### 5. 图标与交互规范
+
+* **库**：统一使用 `lucide-vue-next`。
+* **尺寸**：
+* 按钮内图标：`size="16"` 或 `size="18"`。
+* 侧边栏图标：`size="20"`。
+
+
+* **动效**：
+* 按钮点击：`active:scale-95 transition-transform`。
+* 悬停：颜色平滑过渡 `duration-300`。
+* AI 生成中：图标使用 `animate-spin` 或容器 `animate-pulse`。
+
+
+
+### 6. 状态管理规范 (Pinia)
+
+对于涉及多步骤工作流（如：采集 -> RAG -> 写作）的数据，必须存放在 Pinia Store 中：
+
+```javascript
+// src/stores/useEditorStore.js
+export const useEditorStore = defineStore('editor', () => {
+  const currentArticle = ref({ title: '', content: '' });
+  const ragContext = ref([]);
+  
+  const setArticle = (data) => { currentArticle.value = data; };
+  return { currentArticle, ragContext, setArticle };
+});
+
+```
+
+## 📝 代码审查检查清单 (PR Checklist)
+
+* [ ] **Vue 规范**：是否使用了 `<script setup>`？Props 是否定义了类型？
+* [ ] **视觉一致性**：主色是否为 `blue-600`？背景是否使用了 `slate-50` 或 `slate-900`？
+* [ ] **响应式**：是否使用了 `sm:`, `lg:` 等断点处理 1280px 适配？
+* [ ] **清理**：是否移出了所有硬编码的十六进制颜色值？
+* [ ] **资产**：图标是否来自 `lucide-vue-next`？

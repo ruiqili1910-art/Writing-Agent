@@ -1,0 +1,128 @@
+---
+alwaysApply: true
+---
+
+
+# AI 自动化写作平台 - 企业级视觉设计规范 (v1.0)
+
+> **⚠️ 重要指令：作为资深前端开发与 UX 专家，在创建或修改本项目的任何页面、组件时，必须严格遵循本文档中的企业级蓝色主题规范！保持严肃、美观、简洁的 UI 风格。**
+
+## 📋 Cursor 开发指令
+
+### ✅ 必须做的：
+
+1. **样式实现**：优先使用 **Tailwind CSS**。严格遵循 `8px` 步进的间距系统（p-2, p-4, p-6...）。
+2. **主题色应用**：所有主操作按钮、选中状态必须使用 `blue-600` (#1677FF)，悬停使用 `blue-500`。
+3. **字体规范**：全局使用 `Inter` 配合 `PingFang SC`。正文行高设定为 `1.6` 以保证长文本阅读体验。
+4. **框架约束**：本项目始终使用 **Vue 3**（SFC 单文件组件 + Composition API）。**禁止输出 React/JSX 代码**。
+5. **组件复用**：优先使用 `lucide-vue-next` 图标库。确保图标粗细统一（Stroke Width: 2px）。
+6. **布局逻辑**：顶部菜单宽度限制在 `1600px` 内，左右边距自适应，保持 1920 屏幕下的平衡感。
+
+### ❌ 禁止做的：
+
+1. **禁止随意配色**：除主蓝色外，仅允许使用本文档定义的 `Slate` 灰色系，严禁使用高饱和度的杂色。
+2. **禁止过度装饰**：禁止使用大面积投影、复杂的渐变或超过 `12px` 的圆角。
+3. **禁止硬编码**：禁止在代码中直接写颜色值（如 `#1677FF`），必须映射到 Tailwind 类名或 CSS 变量。
+
+---
+
+## 一、 颜色系统 (Color System) - 企业蓝色系
+
+### 1.1 品牌色与功能色
+
+* **Primary (Blue)**: `#1677FF` (Tailwind: `blue-600`) - 核心操作、链接、品牌标识
+* **Primary Hover**: `#4096FF` (Tailwind: `blue-500`)
+* **Success**: `#10B981` (Tailwind: `emerald-500`) - 审核通过、发布成功
+* **Warning**: `#F59E0B` (Tailwind: `amber-500`) - 敏感词警告、低相似度
+* **Danger**: `#EF4444` (Tailwind: `red-500`) - 抓取失败、违规拦截
+
+### 1.2 中性色 (Neutrals - 采用 Slate 系)
+
+* **Background (App)**: `#F8FAFC` (Tailwind: `slate-50`) - 全局背景
+* **Background (Card)**: `#FFFFFF` - 组件容器背景
+* **Text (Primary)**: `#0F172A` (Tailwind: `slate-900`) - 标题、核心正文
+* **Text (Secondary)**: `#475569` (Tailwind: `slate-600`) - 辅助说明、信源摘要
+* **Border/Divider**: `#E2E8F0` (Tailwind: `slate-200`) - 线条、边框
+
+---
+
+## 二、 文字系统 (Typography)
+
+### 2.1 字体栈
+
+```css
+font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+```
+
+### 2.2 文本层级
+
+| 类型 | 字号 | 字重 | Tailwind 类名 | 用途 |
+| --- | --- | --- | --- | --- |
+| **Page Title** | 30px | 600 | `text-3xl font-semibold` | 工作台大标题 |
+| **Section Head** | 18px | 500 | `text-lg font-medium` | 侧边栏/模块标题 |
+| **Body Content** | 16px | 400 | `text-base leading-relaxed` | 文章编辑器正文 |
+| **Small Label** | 12px | 400 | `text-xs text-slate-500` | 时间戳、信源标签 |
+
+---
+
+## 三、 间距与网格 (Grid & Spacing)
+
+### 3.1 响应式布局规范
+
+* **Max Width**: `1600px` (主内容区容器)
+* **Safe Margin**:
+* 1920px: `mx-auto px-40` (对应 160px 边距)
+* 1280px: `mx-auto px-10` (对应 40px 边距)
+
+
+* **Sidebar Width**:
+* 导航栏: `w-20` (收起) / `w-64` (展开)
+* 创作侧边栏: `w-80` (固定宽度)
+
+
+
+### 3.2 间距基准
+
+* ✅ 模块间距：`gap-6` (24px)
+* ✅ 卡片内边距：`p-4` (16px) 或 `p-6` (24px)
+* ✅ 按钮间距：`space-x-3` (12px)
+
+---
+
+## 四、 组件设计规范 (UI Components)
+
+### 4.1 按钮 (Button)
+
+* **Primary**: `bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-500 transition-all active:scale-95`
+* **Secondary**: `bg-white border border-slate-200 text-slate-700 hover:bg-slate-50`
+
+### 4.2 容器 (Card)
+
+* **Style**: `bg-white border border-slate-200 rounded-lg shadow-sm`
+* **Interactive**: 鼠标悬停时 `hover:shadow-md hover:border-blue-200 transition-shadow`
+
+### 4.3 输入框/编辑器 (Input/Editor)
+
+* **Style**: `border-slate-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 rounded-md`
+* **Markdown**: 编辑器区域应保持极简，背景 `#FFFFFF`，无边框感。
+
+---
+
+## 五、 交互逻辑 (Interaction)
+
+1. **AI 生成态**：AI 正在输出时，使用 `animate-pulse` 或在文字末尾显示呼吸感光标。
+2. **状态反馈**：右侧审核区需实时同步编辑器内容，风险项使用 `border-l-4 border-amber-500` 进行标注。
+3. **加载优化**：RAG 检索过程需使用 Skeleton Screen（骨架屏）展示在左侧列表。
+
+---
+
+## 六、 检查清单 (Checklist)
+
+* [ ] 按钮是否全是蓝色的 `blue-600`？
+* [ ] 页面在 1920 下左右边距是否为 160px，1280 下是否为 40px？
+* [ ] 图标是否全部来自 `lucide-vue-next` 且粗细一致？
+* [ ] 所有的阴影是否都是淡淡的 `shadow-sm` 而非深色投影？
+* [ ] 字体是否优先加载了 `Inter`？
+
+---

@@ -1,0 +1,120 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Database,
+  Globe,
+  LayoutDashboard,
+  PenTool,
+  Send,
+  Settings,
+} from 'lucide-vue-next';
+
+type MenuItem = {
+  name: string;
+  icon: unknown;
+  path: string;
+  badge?: string;
+};
+
+// 导航配置
+const menuItems: MenuItem[] = [
+  { name: '概览', icon: LayoutDashboard, path: '/', badge: 'Hot' },
+  { name: '信源管理', icon: Globe, path: '/sources' },
+  { name: '创作工作台', icon: PenTool, path: '/editor' },
+  { name: 'RAG 知识库', icon: Database, path: '/knowledge' },
+  { name: '内容分发', icon: Send, path: '/publish' },
+];
+
+// 侧边栏：1920px 下默认展开
+const isCollapsed = ref(false);
+const route = useRoute();
+const router = useRouter();
+
+const isActive = (path: string) => route.path === path;
+const go = (path: string) => router.push(path);
+</script>
+
+<template>
+  <div class="min-h-screen bg-slate-50 text-slate-900 flex">
+    <aside
+      :class="[
+        isCollapsed ? 'w-20' : 'w-64',
+        'h-screen sticky top-0 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 border-r border-slate-800',
+      ]"
+    >
+      <div class="h-20 flex items-center px-6 gap-3 overflow-hidden">
+        <div
+          class="w-8 h-8 bg-blue-600 rounded flex-shrink-0 flex items-center justify-center text-white font-bold"
+        >
+          A
+        </div>
+        <span v-if="!isCollapsed" class="text-white font-semibold text-lg whitespace-nowrap">
+          AutoWriter AI
+        </span>
+      </div>
+
+      <nav class="flex-1 px-3 space-y-1 py-4">
+        <div
+          v-for="item in menuItems"
+          :key="item.name"
+          @click="go(item.path)"
+          :class="[
+            isActive(item.path) ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 hover:text-white',
+            'group flex items-center px-3 py-3 rounded-md cursor-pointer transition-colors relative',
+          ]"
+        >
+          <component :is="item.icon" :size="20" class="flex-shrink-0" />
+          <span v-if="!isCollapsed" class="ml-3 font-medium transition-opacity">
+            {{ item.name }}
+          </span>
+
+          <span
+            v-if="!isCollapsed && item.badge"
+            class="ml-auto bg-red-500 text-[10px] text-white px-1.5 py-0.5 rounded-md"
+          >
+            {{ item.badge }}
+          </span>
+
+          <div
+            v-if="isCollapsed"
+            class="hidden group-hover:block absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded-md shadow-md whitespace-nowrap z-50"
+          >
+            {{ item.name }}
+          </div>
+        </div>
+      </nav>
+
+      <div class="p-4 border-t border-slate-800 space-y-2">
+        <div v-if="!isCollapsed" class="px-2 mb-4">
+          <div class="flex justify-between text-[10px] mb-1 text-slate-500 uppercase">
+            AI Node Load
+          </div>
+          <div class="w-full bg-slate-700 h-1 rounded overflow-hidden">
+            <div class="bg-blue-500 h-full w-[35%]"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center px-2 py-2 hover:bg-slate-800 rounded-md cursor-pointer transition-colors">
+          <Settings :size="20" />
+          <span v-if="!isCollapsed" class="ml-3 text-sm">系统设置</span>
+        </div>
+
+        <div
+          @click="isCollapsed = !isCollapsed"
+          class="flex items-center px-2 py-2 hover:bg-slate-800 rounded-md cursor-pointer transition-colors text-slate-500"
+        >
+          <component :is="isCollapsed ? ChevronRight : ChevronLeft" :size="20" />
+          <span v-if="!isCollapsed" class="ml-3 text-sm">收起导航</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0">
+      <slot />
+    </main>
+  </div>
+</template>
+
