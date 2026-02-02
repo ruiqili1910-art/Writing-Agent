@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import logoUrl from '@/assets/logo.svg?url';
 import {
   ChevronLeft,
   ChevronRight,
@@ -29,7 +30,34 @@ const menuItems: MenuItem[] = [
 ];
 
 // 侧边栏：1920px 下默认展开
-const isCollapsed = ref(false);
+const userCollapsed = ref(false);
+const autoCollapsed = ref(false);
+const isCollapsed = computed(() => (autoCollapsed.value ? true : userCollapsed.value));
+
+let mq: MediaQueryList | null = null;
+let onMqChange: ((e: MediaQueryListEvent) => void) | null = null;
+
+onMounted(() => {
+  mq = window.matchMedia('(max-width: 1439px)');
+  autoCollapsed.value = mq.matches;
+
+  onMqChange = (e: MediaQueryListEvent) => {
+    autoCollapsed.value = e.matches;
+  };
+
+  // Safari < 14 fallback
+  if ('addEventListener' in mq) mq.addEventListener('change', onMqChange);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  else (mq as any).addListener(onMqChange);
+});
+
+onBeforeUnmount(() => {
+  if (!mq || !onMqChange) return;
+  if ('removeEventListener' in mq) mq.removeEventListener('change', onMqChange);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  else (mq as any).removeListener(onMqChange);
+});
+
 const route = useRoute();
 const router = useRouter();
 
@@ -46,11 +74,11 @@ const go = (path: string) => router.push(path);
       ]"
     >
       <div class="h-20 flex items-center px-6 gap-3 overflow-hidden">
-        <div
-          class="w-8 h-8 bg-blue-600 rounded flex-shrink-0 flex items-center justify-center text-white font-bold"
-        >
-          A
-        </div>
+        <img
+          :src="logoUrl"
+          alt="AutoWriter AI"
+          class="w-8 h-8 rounded-md flex-shrink-0 object-contain"
+        />
         <span v-if="!isCollapsed" class="text-white font-semibold text-lg whitespace-nowrap">
           AutoWriter AI
         </span>
@@ -103,7 +131,7 @@ const go = (path: string) => router.push(path);
         </div>
 
         <div
-          @click="isCollapsed = !isCollapsed"
+          @click="userCollapsed = !userCollapsed"
           class="flex items-center px-2 py-2 hover:bg-slate-800 rounded-md cursor-pointer transition-colors text-slate-500"
         >
           <component :is="isCollapsed ? ChevronRight : ChevronLeft" :size="20" />

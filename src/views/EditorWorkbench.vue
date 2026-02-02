@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import {
   AlertTriangle,
@@ -16,12 +16,111 @@ import { useEditorStore } from '@/stores/useEditorStore';
 const editor = useEditorStore();
 const { currentArticle, lastSeedPrompt } = storeToRefs(editor);
 
-const editorTextarea = ref<HTMLTextAreaElement | null>(null);
+const editorSurface = ref<HTMLDivElement | null>(null);
+const selectedRagId = ref<number | null>(null);
+
+const floating = ref({
+  open: false,
+  top: 0,
+  left: 0,
+  text: '',
+});
+
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+function placeCaretAtEnd(el: HTMLElement) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+}
+
+const syncSurfaceFromStore = () => {
+  const el = editorSurface.value;
+  if (!el) return;
+  const next = currentArticle.value.content ?? '';
+  const cur = el.innerText ?? '';
+  if (cur !== next) el.innerText = next;
+};
+
+const handleSurfaceInput = () => {
+  if (!editorSurface.value) return;
+  editor.setArticle({ content: editorSurface.value.innerText });
+};
+
+const handleSelectRag = (id: number) => {
+  selectedRagId.value = id;
+};
+
+const handleCopyRag = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // ignore: clipboard may be unavailable
+  }
+};
+
+const hideFloating = () => {
+  floating.value.open = false;
+  floating.value.text = '';
+};
+
+const onPointerDown = (e: PointerEvent) => {
+  const target = e.target as HTMLElement | null;
+  if (!target) return;
+  if (target.closest('[data-editor-floating]')) return;
+  if (target.closest('[data-editor-surface]')) return;
+  hideFloating();
+};
+
+const updateFloating = () => {
+  const el = editorSurface.value;
+  if (!el) return hideFloating();
+
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return hideFloating();
+
+  const range = sel.getRangeAt(0);
+  const container = range.commonAncestorContainer;
+  const withinEditor = el.contains(container.nodeType === Node.ELEMENT_NODE ? container : container.parentElement);
+  if (!withinEditor) return hideFloating();
+
+  const text = sel.toString().trim();
+  if (!text) return hideFloating();
+
+  const rects = range.getClientRects();
+  const rect = rects.length ? rects[rects.length - 1] : range.getBoundingClientRect();
+  const popoverWidth = 240;
+
+  floating.value.text = text;
+  floating.value.open = true;
+  floating.value.top = rect.bottom + 20;
+  floating.value.left = clamp(rect.left, 12, window.innerWidth - popoverWidth - 12);
+};
+
+const handleInsertAiRewrite = () => {
+  if (!floating.value.text) return;
+  const prompt =
+    `\n\n【AI 改写请求】请将以上选中文本改写为企业报告风格，保持事实表达克制，输出 2 个版本（精简/标准）。\n\n选中文本：\n` +
+    floating.value.text;
+  editor.setArticle({ content: `${currentArticle.value.content}${prompt}` });
+  hideFloating();
+  nextTick(() => {
+    if (!editorSurface.value) return;
+    editorSurface.value.focus();
+    placeCaretAtEnd(editorSurface.value);
+  });
+};
+
 watch(
   () => lastSeedPrompt.value,
   async () => {
     await nextTick();
-    editorTextarea.value?.focus();
+    syncSurfaceFromStore();
+    editorSurface.value?.focus();
+    if (editorSurface.value) placeCaretAtEnd(editorSurface.value);
   },
 );
 
@@ -53,6 +152,29 @@ const auditResults = ref({
   issues: [{ type: 'warning', text: '“绝对领先”一词可能存在合规风险', position: '第 2 段' }],
 });
 
+watch(
+  () => currentArticle.value.content,
+  () => {
+    // 避免用户正在输入时打断光标
+    if (document.activeElement === editorSurface.value) return;
+    syncSurfaceFromStore();
+  },
+);
+
+onMounted(() => {
+  syncSurfaceFromStore();
+  document.addEventListener('selectionchange', updateFloating);
+  window.addEventListener('scroll', updateFloating, true);
+  window.addEventListener('resize', updateFloating);
+  document.addEventListener('pointerdown', onPointerDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('selectionchange', updateFloating);
+  window.removeEventListener('scroll', updateFloating, true);
+  window.removeEventListener('resize', updateFloating);
+  document.removeEventListener('pointerdown', onPointerDown);
+});
 </script>
 
 <template>
@@ -95,7 +217,9 @@ const auditResults = ref({
           <div
             v-for="item in ragResults"
             :key="item.id"
-            class="p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-200 transition-colors group cursor-pointer"
+            class="rag-card p-3 bg-white border rounded-lg group cursor-pointer transition-all duration-300 hover:translate-x-1"
+            :class="selectedRagId === item.id ? 'border-blue-600' : 'border-slate-200 hover:border-blue-200'"
+            @click="handleSelectRag(item.id)"
           >
             <div class="flex justify-between items-center mb-2">
               <span
@@ -107,6 +231,7 @@ const auditResults = ref({
                 type="button"
                 class="inline-flex items-center justify-center rounded-md p-1 text-slate-300 group-hover:text-blue-600 transition-colors"
                 aria-label="复制片段"
+                @click.stop="handleCopyRag(item.content)"
               >
                 <Copy :size="12" />
               </button>
@@ -123,26 +248,50 @@ const auditResults = ref({
 
       <!-- 中栏：编辑器（纯白、无边框） -->
       <section class="flex-1 overflow-y-auto bg-white flex justify-center py-12">
-        <div class="w-full max-w-[800px] px-8">
-          <textarea
-            ref="editorTextarea"
-            v-model="currentArticle.content"
-            placeholder="输入热点信息，或使用 AI 辅助生成..."
-            class="w-full min-h-[600px] border-none focus:ring-0 text-lg leading-relaxed text-slate-800 placeholder-slate-300 resize-none"
-          ></textarea>
-
-          <div
-            class="mt-8 p-4 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-between"
-          >
-            <div class="flex items-center gap-2 text-blue-700 text-sm">
-              <Sparkles :size="18" />
-              <span>选中文字以调用 AI 文风修改功能</span>
-            </div>
-            <button type="button" class="text-xs font-bold text-blue-600 hover:text-blue-500 transition-colors">
-              了解更多
-            </button>
+        <div class="w-full max-w-[720px] px-8">
+          <div class="bg-white border border-slate-100 shadow-sm rounded-lg p-8">
+            <div
+              ref="editorSurface"
+              data-editor-surface
+              contenteditable="true"
+              spellcheck="false"
+              data-placeholder="输入热点信息，或使用 AI 辅助生成..."
+              class="editor-surface w-full min-h-[640px] text-lg leading-relaxed text-slate-800 outline-none whitespace-pre-wrap"
+              @input="handleSurfaceInput"
+              @keyup="updateFloating"
+              @mouseup="updateFloating"
+            ></div>
           </div>
         </div>
+
+        <Teleport to="body">
+          <div
+            v-if="floating.open"
+            data-editor-floating
+            class="fixed z-50"
+            :style="{ top: `${floating.top}px`, left: `${floating.left}px`, width: '240px' }"
+          >
+            <div class="bg-slate-900 border border-slate-800 rounded-md shadow-sm p-2 flex items-center gap-2">
+              <button
+                type="button"
+                class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-md px-2 py-2 text-xs font-medium transition-colors"
+                @click="handleInsertAiRewrite"
+              >
+                <span class="inline-flex items-center justify-center gap-1">
+                  <Sparkles :size="16" />
+                  AI 改写
+                </span>
+              </button>
+              <button
+                type="button"
+                class="shrink-0 bg-slate-900 border border-slate-800 text-slate-200 rounded-md px-2 py-2 text-xs hover:border-blue-200 hover:text-blue-200 transition-colors"
+                @click="handleCopyRag(floating.text)"
+              >
+                复制
+              </button>
+            </div>
+          </div>
+        </Teleport>
       </section>
 
       <!-- 右栏：配图 + 审核（卡片间距 gap-6 = 24px） -->
@@ -217,4 +366,11 @@ const auditResults = ref({
     </main>
   </div>
 </template>
+
+<style scoped>
+.editor-surface:empty::before {
+  content: attr(data-placeholder);
+  @apply text-slate-300;
+}
+</style>
 
