@@ -22,10 +22,10 @@ type MenuItem = {
 
 // 导航配置
 const menuItems: MenuItem[] = [
-  { name: '概览', icon: LayoutDashboard, path: '/', badge: 'Hot' },
+  { name: '概览', icon: LayoutDashboard, path: '/', },
   { name: '信源管理', icon: Globe, path: '/sources' },
-  { name: '创作工作台', icon: PenTool, path: '/editor' },
   { name: 'RAG 知识库', icon: Database, path: '/knowledge' },
+  { name: '创作工作台', icon: PenTool, path: '/editor' },
   { name: '内容分发', icon: Send, path: '/publish' },
 ];
 
@@ -70,7 +70,7 @@ const go = (path: string) => router.push(path);
     <aside
       :class="[
         isCollapsed ? 'w-20' : 'w-64',
-        'h-screen sticky top-0 bg-slate-900 text-slate-300 flex flex-col transition-all duration-300 border-r border-slate-800',
+        'h-screen sticky top-0 bg-white text-slate-700 flex flex-col transition-all duration-300 border-r border-slate-200',
       ]"
     >
       <div class="h-20 flex items-center px-6 gap-3 overflow-hidden">
@@ -79,7 +79,7 @@ const go = (path: string) => router.push(path);
           alt="AutoWriter AI"
           class="w-8 h-8 rounded-md flex-shrink-0 object-contain"
         />
-        <span v-if="!isCollapsed" class="text-white font-semibold text-lg whitespace-nowrap">
+        <span v-if="!isCollapsed" class="text-slate-900 font-semibold text-lg whitespace-nowrap">
           AutoWriter AI
         </span>
       </div>
@@ -90,7 +90,7 @@ const go = (path: string) => router.push(path);
           :key="item.name"
           @click="go(item.path)"
           :class="[
-            isActive(item.path) ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 hover:text-white',
+            isActive(item.path) ? 'bg-blue-600 text-white' : 'hover:bg-slate-50 hover:text-slate-900',
             'group flex items-center px-3 py-3 rounded-md cursor-pointer transition-colors relative',
           ]"
         >
@@ -108,31 +108,31 @@ const go = (path: string) => router.push(path);
 
           <div
             v-if="isCollapsed"
-            class="hidden group-hover:block absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-xs rounded-md shadow-md whitespace-nowrap z-50"
+            class="hidden group-hover:block absolute left-full ml-4 px-2 py-1 bg-white text-slate-900 text-xs rounded-md border border-slate-200 shadow-sm whitespace-nowrap z-50"
           >
             {{ item.name }}
           </div>
         </div>
       </nav>
 
-      <div class="p-4 border-t border-slate-800 space-y-2">
+      <div class="p-4 border-t border-slate-200 space-y-2">
         <div v-if="!isCollapsed" class="px-2 mb-4">
           <div class="flex justify-between text-[10px] mb-1 text-slate-500 uppercase">
             AI Node Load
           </div>
-          <div class="w-full bg-slate-700 h-1 rounded overflow-hidden">
+          <div class="w-full bg-slate-200 h-1 rounded overflow-hidden">
             <div class="bg-blue-500 h-full w-[35%]"></div>
           </div>
         </div>
 
-        <div class="flex items-center px-2 py-2 hover:bg-slate-800 rounded-md cursor-pointer transition-colors">
+        <div class="flex items-center px-2 py-2 hover:bg-slate-50 rounded-md cursor-pointer transition-colors">
           <Settings :size="20" />
           <span v-if="!isCollapsed" class="ml-3 text-sm">系统设置</span>
         </div>
 
         <div
           @click="userCollapsed = !userCollapsed"
-          class="flex items-center px-2 py-2 hover:bg-slate-800 rounded-md cursor-pointer transition-colors text-slate-500"
+          class="flex items-center px-2 py-2 hover:bg-slate-50 rounded-md cursor-pointer transition-colors text-slate-500"
         >
           <component :is="isCollapsed ? ChevronRight : ChevronLeft" :size="20" />
           <span v-if="!isCollapsed" class="ml-3 text-sm">收起导航</span>

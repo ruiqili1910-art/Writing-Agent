@@ -233,6 +233,16 @@ watch(
   },
 );
 
+// 切换到正文/配图步骤时，将 store 内容同步到当前正文栏
+watch(
+  () => currentStep.value,
+  (step) => {
+    if (step === 'content' || step === 'audit') {
+      nextTick(() => syncSurfaceFromStore());
+    }
+  },
+);
+
 // Step 2: 大纲生成（先流式输出，再进入“块编辑”）
 const outline = ref<OutlineItem[]>([]);
 const outlineConfirmed = ref(false);
@@ -366,6 +376,10 @@ const onBodyDone = async (fullText: string) => {
   syncSurfaceFromStore();
   editorSurface.value?.focus();
   if (editorSurface.value) placeCaretAtEnd(editorSurface.value);
+  // 创作完成后自动跳转到第 4 步（配图/审核）
+  currentStep.value = 'audit';
+  await nextTick();
+  syncSurfaceFromStore();
 };
 
 // “灵感球”：跟随光标
@@ -654,7 +668,7 @@ onBeforeUnmount(() => {
                     :disabled="outline.length === 0"
                     @click="confirmOutlineAndStartBody"
                   >
-                    🚀 构思完毕，开始生成正文
+                    构思完毕，开始生成正文
                     <ArrowRight :size="18" />
                   </button>
                 </div>
@@ -714,41 +728,60 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <!-- Step 4: 配图 / 审核 -->
+          <!-- Step 4: 配图 / 审核（中间保留正文栏，右侧为配图+审核） -->
           <div v-else class="min-h-[640px]">
             <div class="bg-white border border-slate-100 rounded-lg p-6">
-              <div class="flex items-center gap-2 text-slate-900">
-                <CheckCircle :size="18" class="text-blue-600" />
-                <h3 class="text-base font-medium">配图 / 审核</h3>
+              <div
+                v-if="currentStep === 'audit'"
+                class="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100"
+              >
+                <div class="flex items-center gap-2 text-slate-900">
+                  <CheckCircle :size="18" class="text-blue-600" />
+                  <h3 class="text-base font-medium">配图 / 审核</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-sm transition-colors active:scale-95"
+                    aria-label="灵感球"
+                    @click="onOrbClick"
+                  >
+                    <Lightbulb :size="18" />
+                  </button>
+                  <AppButton variant="secondary" size="sm" @click="goStep('content')">
+                    返回正文
+                  </AppButton>
+                </div>
               </div>
-              <p class="mt-3 text-sm text-slate-600 leading-relaxed">
-                右侧已提供「自动化配图」与「内容质量审核」模块。你可以先在正文阶段生成内容，完成后在此阶段集中处理配图与风险项。
-              </p>
-              <div class="mt-6 flex gap-3">
-                <AppButton variant="secondary" @click="goStep('content')">返回正文</AppButton>
-                <AppButton @click="goStep('audit')">刷新审核</AppButton>
+              <div class="relative">
+                <div
+                  ref="editorSurface"
+                  contenteditable="true"
+                  spellcheck="false"
+                  class="editor-surface w-full min-h-[640px] text-lg leading-relaxed text-slate-800 outline-none whitespace-pre-wrap"
+                  @input="handleSurfaceInput"
+                  @keyup="updateOrb"
+                  @mouseup="updateOrb"
+                  @focus="updateOrb"
+                ></div>
+                <div
+                  v-if="isEmpty"
+                  class="pointer-events-none absolute left-0 top-0 text-slate-300 text-lg leading-relaxed"
+                >
+                  在这里继续编辑正文...
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 灵感球（跟随光标） -->
-          <Teleport to="body">
-            <button
-              v-if="orb.open && !bodyStreaming"
-              type="button"
-              class="fixed z-50 w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-sm transition-colors active:scale-95 flex items-center justify-center"
-              :style="{ top: `${orb.top}px`, left: `${orb.left}px` }"
-              aria-label="灵感球"
-              @click="onOrbClick"
-            >
-              <Lightbulb :size="18" />
-            </button>
-          </Teleport>
         </div>
       </section>
 
-      <!-- 右栏：配图 + 审核（保持 gap-6） -->
-      <aside class="w-80 border-l border-slate-200 bg-white overflow-y-auto">
+      <!-- 右栏：配图 + 审核（仅步骤 4 配图/审核 时显示） -->
+      <aside
+        v-if="currentStep === 'audit'"
+        class="w-80 border-l border-slate-200 bg-white overflow-y-auto shrink-0"
+      >
         <div class="p-6 flex flex-col gap-6">
           <section class="border border-slate-200 rounded-lg shadow-sm">
             <div class="p-6 border-b border-slate-200">

@@ -38,17 +38,52 @@
         />
       </section>
 
-      <!-- 4. Priority Layout：创作队列置中 -->
+      <!-- 4. 两行两列：创作队列 | 实时热点 | 待处理任务 | 信源监听（下排对齐） -->
       <section class="grid grid-cols-12 gap-6 pb-12">
-        <div class="col-span-12 lg:col-span-7 space-y-6">
-          <CreationQueue countText="3 个任务处理中" />
-
-          <article class="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+        <!-- 左上：进行中的任务（与实时热点情报对齐） -->
+        <div class="col-span-12 lg:col-span-7">
+          <CreationQueue :tasks="inProgressTasks" />
+        </div>
+        <!-- 右上：实时热点情报 -->
+        <div class="col-span-12 lg:col-span-5">
+          <article class="bg-white border border-slate-200 rounded-lg shadow-sm p-6 h-full">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-medium text-slate-900">实时热点情报</h2>
+              <button type="button" class="text-sm text-blue-600 hover:text-blue-500 transition-colors">
+                查看全部
+              </button>
+            </div>
+            <div v-if="isHotLoading" class="mt-6 space-y-3 animate-pulse">
+              <div class="h-4 bg-slate-100 rounded" />
+              <div class="h-4 bg-slate-100 rounded w-5/6" />
+              <div class="h-4 bg-slate-100 rounded w-4/6" />
+            </div>
+            <ul v-else class="mt-4 divide-y divide-slate-100">
+              <li v-for="item in hotItems" :key="item.id" class="py-4">
+                <button type="button" class="w-full text-left group" @click="handleStartHot(item.title)">
+                  <div class="flex items-start gap-3">
+                    <div class="mt-0.5 shrink-0 rounded-md border border-slate-200 bg-white p-2 group-hover:border-blue-200 transition-colors">
+                      <TrendingUp class="h-5 w-5 text-slate-700" />
+                    </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-medium text-slate-900 truncate">{{ item.title }}</p>
+                      <p class="mt-1 text-xs text-slate-500">{{ item.source }} · {{ item.time }}</p>
+                      <p class="mt-2 text-sm text-slate-600 leading-relaxed">{{ item.summary }}</p>
+                      <p class="mt-2 text-xs text-blue-600 group-hover:text-blue-500 transition-colors">生成解读 →</p>
+                    </div>
+                  </div>
+                </button>
+              </li>
+            </ul>
+          </article>
+        </div>
+        <!-- 左下：待处理任务 -->
+        <div class="col-span-12 lg:col-span-7">
+          <article class="bg-white rounded-lg border border-slate-200 shadow-sm p-6 h-full">
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-medium text-slate-900">待处理任务</h2>
               <span class="text-xs text-slate-400">按优先级排序</span>
             </div>
-
             <div class="mt-4 grid gap-3">
               <div
                 v-for="task in writingQueue"
@@ -67,13 +102,11 @@
                     {{ task.status }}
                   </span>
                 </div>
-
                 <div v-if="task.risk" class="mt-3 border-l-4 border-amber-500 bg-white pl-3">
                   <p class="text-xs text-slate-600 leading-relaxed">
                     <span class="font-medium text-slate-900">风险提示：</span>{{ task.risk }}
                   </p>
                 </div>
-
                 <div class="mt-4 flex items-center justify-end">
                   <button
                     type="button"
@@ -87,59 +120,15 @@
             </div>
           </article>
         </div>
-
-        <div class="col-span-12 lg:col-span-5 space-y-6">
-          <!-- 热点池 -->
-          <article class="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-medium text-slate-900">实时热点情报</h2>
-              <button type="button" class="text-sm text-blue-600 hover:text-blue-500 transition-colors">
-                查看全部
-              </button>
-            </div>
-
-            <div v-if="isHotLoading" class="mt-6 space-y-3 animate-pulse">
-              <div class="h-4 bg-slate-100 rounded" />
-              <div class="h-4 bg-slate-100 rounded w-5/6" />
-              <div class="h-4 bg-slate-100 rounded w-4/6" />
-              <div class="h-4 bg-slate-100 rounded w-5/6" />
-              <div class="h-4 bg-slate-100 rounded w-3/6" />
-            </div>
-
-            <ul v-else class="mt-4 divide-y divide-slate-100">
-              <li v-for="item in hotItems" :key="item.id" class="py-4">
-                <button type="button" class="w-full text-left group" @click="handleStartHot(item.title)">
-                  <div class="flex items-start gap-3">
-                    <div class="mt-0.5 shrink-0 rounded-md border border-slate-200 bg-white p-2 group-hover:border-blue-200 transition-colors">
-                      <TrendingUp class="h-5 w-5 text-slate-700" />
-                    </div>
-                    <div class="min-w-0">
-                      <p class="text-sm font-medium text-slate-900 truncate">
-                        {{ item.title }}
-                      </p>
-                      <p class="mt-1 text-xs text-slate-500">
-                        {{ item.source }} · {{ item.time }}
-                      </p>
-                      <p class="mt-2 text-sm text-slate-600 leading-relaxed">
-                        {{ item.summary }}
-                      </p>
-                      <p class="mt-2 text-xs text-blue-600 group-hover:text-blue-500 transition-colors">生成解读 →</p>
-                    </div>
-                  </div>
-                </button>
-              </li>
-            </ul>
-          </article>
-
-          <!-- 信源监听 -->
-          <article class="bg-white border border-slate-200 rounded-lg shadow-sm p-6">
+        <!-- 右下：信源监听 -->
+        <div class="col-span-12 lg:col-span-5">
+          <article class="bg-white border border-slate-200 rounded-lg shadow-sm p-6 h-full">
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-medium text-slate-900">信源监听</h2>
               <div class="shrink-0 rounded-md border border-slate-200 bg-white p-2">
                 <Radio class="h-5 w-5 text-slate-700" />
               </div>
             </div>
-
             <ul class="mt-4 space-y-3">
               <li
                 v-for="s in sources"
@@ -279,15 +268,17 @@ const hotItems = [
     source: '地方公告',
     time: '09:58',
   },
-  {
-    id: 'h3',
-    title: '国际会议释放新信号',
-    summary: '议题聚焦区域合作与风险治理，需持续跟踪表述变化与后续行动。',
-    source: '外部信源',
-    time: '09:12',
-  },
 ];
 
+/** 进行中的任务（左上，与实时热点情报同行） */
+const inProgressTasks = [
+  { id: 'p1', title: '今日要闻：政策与市场联动观察', meta: '草稿 · 已关联 RAG 片段 2 条 · 待补充结论段' },
+  { id: 'p2', title: '专题：产业链协同创新的三条线索', meta: '撰写中 · 预计 5 分钟完成 · 已生成提纲' },
+  { id: 'p3', title: '快讯：国际会议要点梳理', meta: '草稿 · 待补充引用来源核验' },
+  { id: 'p4', title: '点评：半导体协定对产业链影响', meta: '撰写中 · 已抓取 3 条信源 · 待润色' },
+];
+
+/** 待处理任务（左下，与信源监听同行） */
 const writingQueue = [
   {
     id: 'w1',
@@ -305,21 +296,12 @@ const writingQueue = [
     statusTone: 'bg-white text-slate-700 border-slate-200',
     risk: '',
   },
-  {
-    id: 'w3',
-    title: '快讯：国际会议要点梳理',
-    meta: '待审核 · 需要引用来源核验',
-    status: '待审核',
-    statusTone: 'bg-white text-amber-600 border-amber-200',
-    risk: '引用来源需补充原文链接或权威出处说明。',
-  },
 ];
 
 const sources: Array<{ id: string; name: string; lastSeen: string; state: SourceState }> = [
   { id: 's1', name: '央媒快讯流', lastSeen: '2 分钟前', state: 'ok' },
   { id: 's2', name: '地方政务公告', lastSeen: '6 分钟前', state: 'ok' },
   { id: 's3', name: '国际通讯社', lastSeen: '12 分钟前', state: 'warn' },
-  { id: 's4', name: '行业研报订阅', lastSeen: '28 分钟前', state: 'down' },
 ];
 
 function toneLabel(state: SourceState) {
