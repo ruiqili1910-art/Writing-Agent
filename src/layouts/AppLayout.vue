@@ -11,23 +11,40 @@ import {
   PenTool,
   Send,
   Settings,
+  Sparkles,
 } from 'lucide-vue-next';
 
 type MenuItem = {
+  key: string;
   name: string;
   icon: unknown;
   path: string;
   badge?: string;
 };
 
+// 导航显示开关：调试时把某页设为 false 即可在侧栏隐藏
+const navVisible: Record<string, boolean> = {
+  overview: false,
+  sources: false,
+  knowledge: false,
+  editor: false,
+  publish: false,
+  writingAssistant: true,
+};
+
 // 导航配置
 const menuItems: MenuItem[] = [
-  { name: '概览', icon: LayoutDashboard, path: '/', },
-  { name: '信源管理', icon: Globe, path: '/sources' },
-  { name: 'RAG 知识库', icon: Database, path: '/knowledge' },
-  { name: '创作工作台', icon: PenTool, path: '/editor' },
-  { name: '内容分发', icon: Send, path: '/publish' },
+  { key: 'overview', name: '概览', icon: LayoutDashboard, path: '/' },
+  { key: 'sources', name: '信源管理', icon: Globe, path: '/sources' },
+  { key: 'knowledge', name: 'RAG 知识库', icon: Database, path: '/knowledge' },
+  { key: 'editor', name: '创作工作台', icon: PenTool, path: '/editor' },
+  { key: 'publish', name: '内容分发', icon: Send, path: '/publish' },
+  { key: 'writingAssistant', name: '写作助手', icon: Sparkles, path: '/writing-assistant' },
 ];
+
+const visibleMenuItems = computed(() =>
+  menuItems.filter((item) => navVisible[item.key] !== false)
+);
 
 // 侧边栏：1920px 下默认展开
 const userCollapsed = ref(false);
@@ -86,7 +103,7 @@ const go = (path: string) => router.push(path);
 
       <nav class="flex-1 px-3 space-y-1 py-4">
         <div
-          v-for="item in menuItems"
+          v-for="item in visibleMenuItems"
           :key="item.name"
           @click="go(item.path)"
           :class="[
