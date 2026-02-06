@@ -3,11 +3,11 @@
     <iframe
       src="http://192.168.3.125/agent/share?shared_id=8df023c601a411f1b4fc122a839ff8b1&from=agent&auth=dRdHTMqM1p6y0YPaB2yny2get9C_4zUl&theme=light"
       class="w-full h-full min-h-[600px] border-0 block"
-      title="写作助手"
+      title="新闻聚合"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-// 写作助手 - 占位页
+// 新闻聚合 - 与写作助手相同结构
 </script>

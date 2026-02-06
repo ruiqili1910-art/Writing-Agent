@@ -8,6 +8,7 @@ import {
   Database,
   Globe,
   LayoutDashboard,
+  Newspaper,
   PenTool,
   Send,
   Settings,
@@ -30,16 +31,18 @@ const navVisible: Record<string, boolean> = {
   editor: false,
   publish: false,
   writingAssistant: true,
+  newsAggregation: true,
 };
 
 // 导航配置
 const menuItems: MenuItem[] = [
-  { key: 'overview', name: '概览', icon: LayoutDashboard, path: '/' },
+  { key: 'overview', name: '概览', icon: LayoutDashboard, path: '/overview' },
   { key: 'sources', name: '信源管理', icon: Globe, path: '/sources' },
   { key: 'knowledge', name: 'RAG 知识库', icon: Database, path: '/knowledge' },
   { key: 'editor', name: '创作工作台', icon: PenTool, path: '/editor' },
   { key: 'publish', name: '内容分发', icon: Send, path: '/publish' },
   { key: 'writingAssistant', name: '写作助手', icon: Sparkles, path: '/writing-assistant' },
+  { key: 'newsAggregation', name: '新闻聚合', icon: Newspaper, path: '/news-aggregation' },
 ];
 
 const visibleMenuItems = computed(() =>
@@ -93,11 +96,11 @@ const go = (path: string) => router.push(path);
       <div class="h-20 flex items-center px-6 gap-3 overflow-hidden">
         <img
           :src="logoUrl"
-          alt="AutoWriter AI"
+          alt="自动写作智能体"
           class="w-8 h-8 rounded-md flex-shrink-0 object-contain"
         />
         <span v-if="!isCollapsed" class="text-slate-900 font-semibold text-lg whitespace-nowrap">
-          AutoWriter AI
+          自动写作智能体
         </span>
       </div>
 
