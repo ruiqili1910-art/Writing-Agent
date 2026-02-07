@@ -6,6 +6,7 @@ import Knowledge from '@/views/Knowledge.vue';
 import Publish from '@/views/Publish.vue';
 import SourceManagement from '@/views/SourceManagement.vue';
 import NewsAggregation from '@/views/NewsAggregation.vue';
+import SmartTranslation from '@/views/SmartTranslation.vue';
 import WritingAssistant from '@/views/WritingAssistant.vue';
 
 export const router = createRouter({
@@ -19,6 +20,7 @@ export const router = createRouter({
     { path: '/publish', name: 'publish', component: Publish },
     { path: '/writing-assistant', name: 'writingAssistant', component: WritingAssistant },
     { path: '/news-aggregation', name: 'newsAggregation', component: NewsAggregation },
+    { path: '/smart-translation', name: 'smartTranslation', component: SmartTranslation },
   ],
   scrollBehavior: () => ({ top: 0 }),
 });

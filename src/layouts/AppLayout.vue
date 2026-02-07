@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Database,
   Globe,
+  Languages,
   LayoutDashboard,
   Newspaper,
   PenTool,
@@ -32,6 +33,7 @@ const navVisible: Record<string, boolean> = {
   publish: false,
   writingAssistant: true,
   newsAggregation: true,
+  smartTranslation: true,
 };
 
 // 导航配置
@@ -41,8 +43,9 @@ const menuItems: MenuItem[] = [
   { key: 'knowledge', name: 'RAG 知识库', icon: Database, path: '/knowledge' },
   { key: 'editor', name: '创作工作台', icon: PenTool, path: '/editor' },
   { key: 'publish', name: '内容分发', icon: Send, path: '/publish' },
-  { key: 'writingAssistant', name: '写作助手', icon: Sparkles, path: '/writing-assistant' },
-  { key: 'newsAggregation', name: '新闻聚合', icon: Newspaper, path: '/news-aggregation' },
+  { key: 'writingAssistant', name: '热点追踪', icon: Sparkles, path: '/writing-assistant' },
+  { key: 'newsAggregation', name: '监测日报', icon: Newspaper, path: '/news-aggregation' },
+  { key: 'smartTranslation', name: '智能翻译', icon: Languages, path: '/smart-translation' },
 ];
 
 const visibleMenuItems = computed(() =>
